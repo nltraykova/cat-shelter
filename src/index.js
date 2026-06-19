@@ -6,6 +6,9 @@ import { addBreeds, readBreeds } from './breedService.js';
 
 //request listener
 const server = http.createServer(async (req, res) => {
+
+    console.log(readBreeds());
+    
     
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         let body = '';
