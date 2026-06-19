@@ -19,6 +19,11 @@ const server = http.createServer(async (req, res) => {
             const breedName = formData.get('breed');
             addBreeds(breedName);
         });
+
+        //redirect to the home page after adding a breed
+        res.writeHead(302, { Location: '/'});
+
+        return res.end();
     };
 
     if (req.url === '/styles/site.css') {
