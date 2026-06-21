@@ -46,10 +46,10 @@ const server = http.createServer(async (req, res) => {
             htmlContent = await renderHomePage();
             break;
         case '/cats/add-breed':
-            htmlContent = await fs.readFile('./src/views/addBreed.html', 'utf-8');
+            htmlContent = await fs.readFile('./src/views/addBreed.html');
             break;
         case '/cats/add-cat':
-            htmlContent = await fs.readFile('./src/views/addCat.html', 'utf-8');
+            htmlContent = await renderAddCatPage();
             break;
         default:
             htmlContent = await fs.readFile('./src/views/notFound.html', 'utf-8');
@@ -64,7 +64,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(5000, () => console.log('Server running on http://localhost:5000...'));
 
 async function renderHomePage() {
-    let htmlContent = await fs.readFile('./src/views/home/index.html', 'utf-8');
+    const htmlContent = await fs.readFile('./src/views/home/index.html', 'utf-8');
 
     const catTemplate = (cat) => `
                 <li>
@@ -86,3 +86,13 @@ async function renderHomePage() {
     return result;
     
 };
+
+async function renderAddCatPage() {
+    const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf-8');
+
+    const breedOptions = (breed) => `<option value="${breed.id}">${breed.name}</option>`;
+
+    const result = htmlContent.replace('{{breedOptions}}', breeds.map(breed => breedOptions(breed)));
+
+    return result;
+}
