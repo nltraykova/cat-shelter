@@ -1,13 +1,35 @@
 import http from 'http';
 import fs from 'fs/promises';
-import cats from './cats.js';
-import breeds from './breeds.js';
 import { addBreeds, readBreeds } from './breedService.js';
+import { addCat, readCats } from './catService.js';
 
 //request listener
 const server = http.createServer(async (req, res) => {
 
-    console.log(readBreeds());
+    if(req.method === 'POST' && req.url === '/cats/add-cat') {
+        let body = '';
+
+        req.on('data', (chunk) => {
+            body += chunk
+        });
+
+        req.on('end', async () => {
+            const formData = new URLSearchParams(body);
+
+            const newCat = {
+                imageUrl: formData.get('imageUrl'),
+                name: formData.get('name'),
+                description: formData.get('description'),
+                breed: formData.get('breed')
+            };
+
+            addCat(newCat);
+        });
+
+        res.writeHead(302, { Location: '/'});
+
+        return res.end();
+    };
     
     
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
@@ -79,20 +101,24 @@ async function renderHomePage() {
                 </li>
         `;
 
+    const cats = readCats();
+
     const catsContent = `<ul>${cats.map(cat => catTemplate(cat)).join('\n')}</ul>`
 
     const result = htmlContent.replace('{{cats}}', catsContent);
 
     return result;
     
-};
+}
 
 async function renderAddCatPage() {
     const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf-8');
 
-    const breedOptions = (breed) => `<option value="${breed.id}">${breed.name}</option>`;
+    const breedOptionsTemplate = (breed) => `<option value="${breed.id}">${breed.name}</option>`;
 
-    const result = htmlContent.replace('{{breedOptions}}', breeds.map(breed => breedOptions(breed)));
+    const breeds = readBreeds();
+
+    const result = htmlContent.replace('{{breedOptions}}', breeds.map(breed => breedOptionsTemplate(breed)).join('\n'));
 
     return result;
 }
