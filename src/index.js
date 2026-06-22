@@ -1,6 +1,6 @@
 import http from 'http';
 import fs from 'fs/promises';
-import { addBreeds, readBreeds } from './breedService.js';
+import { addBreeds, readBreeds, getBreadByName } from './breedService.js';
 import { addCat, readCats, findCatById, editCat } from './catService.js';
 
 //request listener
@@ -99,7 +99,12 @@ const server = http.createServer(async (req, res) => {
         const catId = req.url.split('/').pop();
 
         htmlContent = await renderEditCatPage(catId);
-    } else {
+    } else if (req.url.startsWith('/cats/new-home')) {
+        const catId = req.url.split('/').pop();
+
+        htmlContent = await renderCatShelterPage(catId);
+    }
+        else {
         htmlContent = await renderPageNotFound();
     };
 
@@ -120,7 +125,7 @@ async function renderHomePage() {
                     <p><span>Description: </span>${cat.description}</p>
                     <ul class="buttons">
                         <li class="btn edit"><a href="/cats/edit-cat/${cat.id}">Change Info</a></li>
-                        <li class="btn delete"><a href="">New Home</a></li>
+                        <li class="btn delete"><a href="/cats/new-home/${cat.id}">New Home</a></li>
                     </ul>
                 </li>
         `;
@@ -156,6 +161,26 @@ async function renderEditCatPage(catId) {
         .replace('{{description}}', cat.description)
         .replace('{{imageUrl}}', cat.imageUrl)
         .replace('{{breedOptions}}', renderBreedOptions(cat.breed));
+
+    return result;
+}
+
+async function renderCatShelterPage(catId) {
+    const cat = findCatById(catId);
+
+    if (!cat) {
+        return renderPageNotFound()
+    };
+
+    const breed = getBreadByName(cat.breed);
+
+    const htmlContent = await fs.readFile('./src/views/catShelter.html', 'utf-8');
+
+    const result = htmlContent.replaceAll('{{name}}', cat.name)
+            .replace('{{imageUrl}}', cat.imageUrl)
+            .replace('{{description}}', cat.description)
+            .replace('{{breed.id}}', breed.id)
+            .replace('{{breed.name}}', breed.name);
 
     return result;
 }
