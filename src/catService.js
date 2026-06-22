@@ -25,8 +25,11 @@ export function findCatById(catId) {
 export function editCat(catId, catData) {
     const catIndex = cats.findIndex((cat) => cat.id === catId);
 
+    const breedName = getBreedById(catData.breed)?.name || 'Unknown Breed';
+
     cats[catIndex] = {
         id: catId,
-        ...catData
+        ...catData,
+        breed: breedName
     };
 }

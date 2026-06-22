@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
                 imageUrl: formData.get('imageUrl'),
                 name: formData.get('name'),
                 description: formData.get('description'),
-                //breed: formData.get('breed')
+                breed: formData.get('breed')
             };
 
             editCat(catId, editedCat);
@@ -138,11 +138,7 @@ async function renderHomePage() {
 async function renderAddCatPage() {
     const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf-8');
 
-    const breedOptionsTemplate = (breed) => `<option value="${breed.id}">${breed.name}</option>`;
-
-    const breeds = readBreeds();
-
-    const result = htmlContent.replace('{{breedOptions}}', breeds.map(breed => breedOptionsTemplate(breed)).join('\n'));
+    const result = htmlContent.replace('{{breedOptions}}', renderBreedOptions());
 
     return result;
 }
@@ -158,11 +154,20 @@ async function renderEditCatPage(catId) {
 
     const result = htmlContent.replace('{{name}}', cat.name)
         .replace('{{description}}', cat.description)
-        .replace('{{imageUrl}}', cat.imageUrl);
+        .replace('{{imageUrl}}', cat.imageUrl)
+        .replace('{{breedOptions}}', renderBreedOptions(cat.breed));
 
     return result;
 }
 
 async function renderPageNotFound() {
     return await fs.readFile('./src/views/notFound.html', 'utf-8');
+}
+
+function renderBreedOptions(selectedBreed) {
+    const breeds = readBreeds();
+
+    const breedOptionsTemplate = (breed) => `<option value="${breed.id}"${breed.name === selectedBreed ? ' selected' : ''}>${breed.name}</option>`;
+
+    return breeds.map(breed => breedOptionsTemplate(breed)).join('\n');
 }
