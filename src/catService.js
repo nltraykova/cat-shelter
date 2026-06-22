@@ -33,3 +33,13 @@ export function editCat(catId, catData) {
         breed: breedName
     };
 }
+
+export function deleteCate(catId) {
+    const catIndex = cats.find((cat) => cat.id === catId);
+
+    if (catIndex === -1) {
+        return new Error('Cat not found');
+    };
+
+    return cats.splice(catIndex, 1);
+}
