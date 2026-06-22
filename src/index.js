@@ -1,12 +1,13 @@
 import http from 'http';
 import fs from 'fs/promises';
 import { addBreeds, readBreeds } from './breedService.js';
-import { addCat, readCats } from './catService.js';
+import { addCat, readCats, findCatById, editCat } from './catService.js';
 
 //request listener
 const server = http.createServer(async (req, res) => {
 
-    if(req.method === 'POST' && req.url === '/cats/add-cat') {
+    // Post requests
+    if (req.method === 'POST' && req.url === '/cats/add-cat') {
         let body = '';
 
         req.on('data', (chunk) => {
@@ -26,12 +27,37 @@ const server = http.createServer(async (req, res) => {
             addCat(newCat);
         });
 
-        res.writeHead(302, { Location: '/'});
+        res.writeHead(302, { Location: '/' });
 
         return res.end();
     };
-    
-    
+
+    if (req.method === 'POST' && req.url.startsWith('/cats/edit-cat')) {
+        let body = '';
+
+        req.on('data', (chunk) => {
+            body += chunk
+        });
+
+        req.on('end', async () => {
+            const catId = req.url.split('/').pop();
+            const formData = new URLSearchParams(body);
+
+            const editedCat = {
+                imageUrl: formData.get('imageUrl'),
+                name: formData.get('name'),
+                description: formData.get('description'),
+                //breed: formData.get('breed')
+            };
+
+            editCat(catId, editedCat);
+        });
+
+        res.writeHead(302, { Location: '/'});
+        
+        return res.end();
+    }
+
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         let body = '';
 
@@ -46,7 +72,7 @@ const server = http.createServer(async (req, res) => {
         });
 
         //redirect to the home page after adding a breed
-        res.writeHead(302, { Location: '/'});
+        res.writeHead(302, { Location: '/' });
 
         return res.end();
     };
@@ -54,30 +80,28 @@ const server = http.createServer(async (req, res) => {
     if (req.url === '/styles/site.css') {
         const cssContent = await fs.readFile('./src/styles/site.css', 'utf-8');
 
-        res.writeHead(200, {'Content-Type': 'text/css'});
+        res.writeHead(200, { 'Content-Type': 'text/css' });
         res.write(cssContent);
         return res.end();
     };
 
     let htmlContent = '';
-    res.writeHead(200, {'Content-Type':'text/html'});
-    
+    res.writeHead(200, { 'Content-Type': 'text/html' });
 
-    switch (req.url) {
-        case '/':
-            htmlContent = await renderHomePage();
-            break;
-        case '/cats/add-breed':
-            htmlContent = await fs.readFile('./src/views/addBreed.html');
-            break;
-        case '/cats/add-cat':
-            htmlContent = await renderAddCatPage();
-            break;
-        default:
-            htmlContent = await fs.readFile('./src/views/notFound.html', 'utf-8');
-            break;
+    // Get requests
+    if (req.url === '/') {
+        htmlContent = await renderHomePage();
+    } else if (req.url === '/cats/add-breed') {
+        htmlContent = await fs.readFile('./src/views/addBreed.html', 'utf-8');
+    } else if (req.url === '/cats/add-cat') {
+        htmlContent = await renderAddCatPage();
+    } else if (req.url.startsWith('/cats/edit-cat')) {
+        const catId = req.url.split('/').pop();
+
+        htmlContent = await renderEditCatPage(catId);
+    } else {
+        htmlContent = await renderPageNotFound();
     };
-    
 
     res.write(htmlContent);
     res.end();
@@ -95,7 +119,7 @@ async function renderHomePage() {
                     <p><span>Breed: </span>${cat.breed}</p>
                     <p><span>Description: </span>${cat.description}</p>
                     <ul class="buttons">
-                        <li class="btn edit"><a href="">Change Info</a></li>
+                        <li class="btn edit"><a href="/cats/edit-cat/${cat.id}">Change Info</a></li>
                         <li class="btn delete"><a href="">New Home</a></li>
                     </ul>
                 </li>
@@ -108,7 +132,7 @@ async function renderHomePage() {
     const result = htmlContent.replace('{{cats}}', catsContent);
 
     return result;
-    
+
 }
 
 async function renderAddCatPage() {
@@ -121,4 +145,24 @@ async function renderAddCatPage() {
     const result = htmlContent.replace('{{breedOptions}}', breeds.map(breed => breedOptionsTemplate(breed)).join('\n'));
 
     return result;
+}
+
+async function renderEditCatPage(catId) {
+    const cat = findCatById(catId);
+
+    if (!cat) {
+        return renderPageNotFound();
+    }
+
+    const htmlContent = await fs.readFile('./src/views/editCat.html', 'utf-8');
+
+    const result = htmlContent.replace('{{name}}', cat.name)
+        .replace('{{description}}', cat.description)
+        .replace('{{imageUrl}}', cat.imageUrl);
+
+    return result;
+}
+
+async function renderPageNotFound() {
+    return await fs.readFile('./src/views/notFound.html', 'utf-8');
 }
