@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import { addBreeds, readBreeds, getBreadByName } from './breedService.js';
 import { addCat, readCats, findCatById, editCat, deleteCate } from './catService.js';
 
-//request listener
+//create server with request listener function
 const server = http.createServer(async (req, res) => {
 
     // Post requests
@@ -53,8 +53,8 @@ const server = http.createServer(async (req, res) => {
             editCat(catId, editedCat);
         });
 
-        res.writeHead(302, { Location: '/'});
-        
+        res.writeHead(302, { Location: '/' });
+
         return res.end();
     };
 
@@ -63,8 +63,8 @@ const server = http.createServer(async (req, res) => {
 
         deleteCate(catId);
 
-        res.writeHead(302, { Location: '/'});
-        
+        res.writeHead(302, { Location: '/' });
+
         return res.end();
     }
 
@@ -116,7 +116,7 @@ const server = http.createServer(async (req, res) => {
         const catId = req.url.split('/').pop();
         htmlContent = await renderCatShelterPage(catId);
     }
-        else {
+    else {
         htmlContent = await renderPageNotFound();
     };
 
@@ -147,7 +147,7 @@ async function renderHomePage(filter = {}) {
     const catsContent = `<ul>${cats.map(cat => catTemplate(cat)).join('\n')}</ul>`
 
     const result = htmlContent.replace('{{cats}}', catsContent)
-                        .replace('{{name}}', filter.name || '');
+        .replace('{{name}}', filter.name || '');
 
     return result;
 
@@ -190,10 +190,10 @@ async function renderCatShelterPage(catId) {
     const htmlContent = await fs.readFile('./src/views/catShelter.html', 'utf-8');
 
     const result = htmlContent.replaceAll('{{name}}', cat.name)
-            .replace('{{imageUrl}}', cat.imageUrl)
-            .replace('{{description}}', cat.description)
-            .replace('{{breed.id}}', breed.id)
-            .replace('{{breed.name}}', breed.name);
+        .replace('{{imageUrl}}', cat.imageUrl)
+        .replace('{{description}}', cat.description)
+        .replace('{{breed.id}}', breed.id)
+        .replace('{{breed.name}}', breed.name);
 
     return result;
 }
